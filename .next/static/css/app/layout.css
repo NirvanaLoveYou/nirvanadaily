@@ -3163,6 +3163,13 @@ font-weight: 100 900;
       }
     }
   }
+  .hover\:bg-\[\#EAE8DD\] {
+    &:hover {
+      @media (hover: hover) {
+        background-color: #EAE8DD;
+      }
+    }
+  }
   .hover\:bg-\[\#F2D7D5\] {
     &:hover {
       @media (hover: hover) {

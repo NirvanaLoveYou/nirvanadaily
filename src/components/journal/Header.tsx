@@ -1,13 +1,10 @@
 "use client";
 
 import { useJournal } from "@/lib/journal-context";
-import { ChevronLeft, ChevronRight } from "lucide-react";
-import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth, startOfYear, endOfYear, addMonths, subMonths, addWeeks, subWeeks, addYears, subYears } from "date-fns";
-import { ru } from "date-fns/locale";
 import { useMemo } from "react";
 
 export default function Header() {
-  const { currentDate, setCurrentDate, setViewMode, calendarViewMode, setCalendarViewMode, tabMode, viewMode, theme } = useJournal();
+  const { setViewMode, calendarViewMode, setCalendarViewMode, tabMode, viewMode, theme } = useJournal();
 
   // Determine if we should show calendar controls
   const showCalendarControls = tabMode === 'journal' && viewMode === 'month';
@@ -23,39 +20,10 @@ export default function Header() {
     }
   }, [tabMode]);
 
-  const handlePrev = () => {
-    if (calendarViewMode === 'week') setCurrentDate(subWeeks(currentDate, 1));
-    else if (calendarViewMode === 'month') setCurrentDate(subMonths(currentDate, 1));
-    else if (calendarViewMode === 'year') setCurrentDate(subYears(currentDate, 1));
-  };
-
-  const handleNext = () => {
-    if (calendarViewMode === 'week') setCurrentDate(addWeeks(currentDate, 1));
-    else if (calendarViewMode === 'month') setCurrentDate(addMonths(currentDate, 1));
-    else if (calendarViewMode === 'year') setCurrentDate(addYears(currentDate, 1));
-  };
-
   const handleSetView = (newView: 'week' | 'month' | 'year') => {
     setViewMode('month');
     setCalendarViewMode(newView);
   };
-
-  const periodTitle = useMemo(() => {
-    if (!showCalendarControls) return "";
-    if (calendarViewMode === 'week') {
-      const start = startOfWeek(currentDate, { weekStartsOn: 1 });
-      const end = endOfWeek(currentDate, { weekStartsOn: 1 });
-      return `${format(start, 'd MMM')} - ${format(end, 'd MMM', { locale: ru })}`;
-    } else if (calendarViewMode === 'month') {
-      return format(currentDate, 'LLLL yyyy', { locale: ru });
-    } else if (calendarViewMode === 'year') {
-      return format(currentDate, 'yyyy', { locale: ru });
-    }
-    return "";
-  }, [showCalendarControls, calendarViewMode, currentDate]);
-
-  const getPrimaryBg = () => theme === 'purple' ? 'bg-[#c084fc]' : theme === 'dark' ? 'bg-[#94a3b8]' : theme === 'nature' ? 'bg-[#3E4E3C]' : 'bg-[#E8A87C]';
-  const getActiveText = () => theme === 'purple' ? 'text-[#c084fc]' : theme === 'dark' ? 'text-[#94a3b8]' : theme === 'nature' ? 'text-[#8B6C5E]' : 'text-[#E8A87C]';
 
   return (
     <header className={`
@@ -80,44 +48,6 @@ export default function Header() {
         {showCalendarControls ? (
           <div className="flex items-center gap-2">
             
-            {/* Nav Arrows */}
-            <button 
-              onClick={handlePrev} 
-              className={`p-1.5 rounded-md transition-colors ${
-                theme === 'dark' 
-                  ? 'text-slate-400 hover:text-slate-200 hover:bg-slate-800' 
-                  : theme === 'purple'
-                  ? 'text-purple-400 hover:text-purple-900 hover:bg-white'
-                  : theme === 'nature'
-                  ? 'text-[#5F6A63] hover:text-[#2C362F] hover:bg-[#E9E6DB]'
-                  : 'text-[#4A403A]/60 hover:text-[#4A403A] hover:bg-white'
-              }`}
-            >
-              <ChevronLeft size={18} />
-            </button>
-
-            {/* Period Label */}
-            <span className={`text-xs font-bold min-w-[60px] text-center transition-colors ${
-              theme === 'dark' ? 'text-slate-300' : theme === 'purple' ? 'text-purple-700' : theme === 'nature' ? 'text-[#2C362F]/80' : 'text-[#4A403A]/80'
-            }`}>
-              {periodTitle}
-            </span>
-
-            <button 
-              onClick={handleNext} 
-              className={`p-1.5 rounded-md transition-colors ${
-                theme === 'dark' 
-                  ? 'text-slate-400 hover:text-slate-200 hover:bg-slate-800' 
-                  : theme === 'purple'
-                  ? 'text-purple-400 hover:text-purple-900 hover:bg-white'
-                  : theme === 'nature'
-                  ? 'text-[#5F6A63] hover:text-[#2C362F] hover:bg-[#E9E6DB]'
-                  : 'text-[#4A403A]/60 hover:text-[#4A403A] hover:bg-white'
-              }`}
-            >
-              <ChevronRight size={18} />
-            </button>
-
             {/* Switcher: Week / Month / Year */}
             <div className={`
               flex items-center p-0.5 rounded-lg border shadow-sm ml-1

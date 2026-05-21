@@ -5,7 +5,7 @@ import { useJournal, QUICK_ACTIONS_CONFIG } from "@/lib/journal-context";
 import { 
   Download, Upload, Trash2, ChevronRight, 
   BarChart3, Sparkles, User, Palette, RotateCcw, 
-  Settings2, Zap, Leaf, Check, Pencil, X, Sun, Moon 
+  Settings2, Zap, Leaf, Check, Pencil, X, Sun, Moon, FileText
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -39,7 +39,8 @@ export default function UserView() {
     userName,
     setUserName,
     hasOnboarded,
-    setHasOnboarded
+    setHasOnboarded,
+    setTabMode
   } = useJournal();
   
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -462,6 +463,28 @@ export default function UserView() {
           </Button>
         </div>
         <input type="file" ref={fileInputRef} onChange={handleFileChange} accept=".json" className="hidden" />
+
+        <div className={`${getSolidBorder()} pt-2 border-t`}>
+           <Button 
+              variant="outline"
+              onClick={() => {
+                setTabMode('stats');
+                toast.success("Перейдите в раздел 'Анализ' → 'Отчеты' для создания отчета");
+              }}
+              className={`w-full justify-start h-10 px-4 transition-colors ${
+                theme === 'dark' 
+                  ? 'border-slate-700 text-slate-300 hover:bg-slate-800' 
+                  : theme === 'purple'
+                  ? 'border-purple-200 text-purple-600 hover:bg-purple-50'
+                  : theme === 'nature'
+                  ? 'border-[#D3CCC0] text-[#8B6C5E] hover:bg-[#EAE8DD]'
+                  : 'border-black/5 text-[#4A403A] hover:bg-[#FAF9F6]'
+              }`}
+            >
+              <FileText size={16} className="mr-2" />
+              Создать отчет
+            </Button>
+        </div>
 
         <div className={`${getSolidBorder()} pt-2 border-t`}>
            <Button 

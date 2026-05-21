@@ -7,8 +7,9 @@ import { Input } from "@/components/ui/input"; // Added missing import
 import { 
   BarChart3, FileText, Zap, CheckCircle2, 
   PieChart as RechartsPieIcon, LineChart as RechartsLineIcon, 
-  TrendingUp, Smile, Calendar, BookOpen, Filter, ArrowDown, ArrowUp, Search, X
+  TrendingUp, Smile, Calendar, BookOpen, Filter, ArrowDown, ArrowUp, Search, X, Download
 } from "lucide-react";
+import { toast } from "sonner";
 import { useMemo, useState } from "react";
 import { 
   AreaChart, Area, XAxis, YAxis, CartesianGrid, ResponsiveContainer, 
@@ -33,7 +34,8 @@ const MOOD_VALUES: Record<string, number> = {
 
 export type ChartMetric = 'tasks' | 'mood' | 'logs' | 'events';
 export type TimePeriod = 'day' | 'week' | 'month' | 'year';
-type AppViewMode = 'charts' | 'reading' | 'search';
+type AppViewMode = 'charts' | 'reading' | 'search' | 'reports';
+type ReportMetric = 'tasks' | 'mood' | 'logs' | 'all';
 
 const renderActiveShape = (props: any) => {
   const { cx, cy, innerRadius, outerRadius, startAngle, endAngle, fill } = props;
@@ -61,6 +63,10 @@ export default function StatsView() {
   const [readSortAsc, setReadSortAsc] = useState(true); 
   const [searchQuery, setSearchQuery] = useState("");
   const [viewType, setViewType] = useState<'line' | 'pie'>('line');
+  
+  // Report states
+  const [reportPeriod, setReportPeriod] = useState<TimePeriod>('month');
+  const [reportMetrics, setReportMetrics] = useState<Set<ReportMetric>>(new Set(['tasks', 'mood', 'logs']));
 
   // --- SEARCH LOGIC ---
   const searchResults = useMemo(() => {
@@ -108,6 +114,98 @@ export default function StatsView() {
     setCurrentDate(dateObj);
     setViewMode('day');
     setTabMode('journal');
+  };
+
+  // --- REPORT GENERATION ---
+  const generateReport = () => {
+    let startDate: Date, endDate: Date;
+
+    if (reportPeriod === 'day') {
+      startDate = currentDate;
+      endDate = currentDate;
+    } else if (reportPeriod === 'week') {
+      startDate = startOfWeek(currentDate, { weekStartsOn: 1 });
+      endDate = endOfWeek(currentDate, { weekStartsOn: 1 });
+    } else if (reportPeriod === 'month') {
+      startDate = startOfMonth(currentDate);
+      endDate = endOfMonth(currentDate);
+    } else {
+      startDate = startOfYear(currentDate);
+      endDate = new Date(currentDate.getFullYear(), 11, 31);
+    }
+
+    const days = eachDayOfInterval({ start: startDate, end: endDate });
+    let totalTasks = 0, completedTasks = 0;
+    let totalLogs = 0, totalReflections = 0;
+    let moodCounts = { euphoria: 0, calm: 0, pensive: 0, sadness: 0, rage: 0 };
+    let moodSum = 0, moodCount = 0;
+    const entries: any[] = [];
+
+    days.forEach(day => {
+      const key = format(day, 'yyyy-MM-dd');
+      const entry = data[key];
+      if (!entry) return;
+
+      const dayTasks = entry.tasks || [];
+      const dayLogs = entry.logs || [];
+      const dayReflections = entry.reflections || [];
+      const dayMoods = entry.moodLogs || [];
+
+      totalTasks += dayTasks.length;
+      completedTasks += dayTasks.filter(t => t.completed).length;
+      totalLogs += dayLogs.length;
+      totalReflections += dayReflections.length;
+
+      dayMoods.forEach(m => {
+        moodCounts[m.type as keyof typeof moodCounts]++;
+        moodSum += MOOD_VALUES[m.type] || 3;
+        moodCount++;
+      });
+
+      if (dayTasks.length || dayLogs.length || dayReflections.length || dayMoods.length) {
+        entries.push({
+          date: key,
+          tasks: dayTasks.length,
+          completed: dayTasks.filter(t => t.completed).length,
+          logs: dayLogs.length,
+          reflections: dayReflections.length,
+          moods: dayMoods.length
+        });
+      }
+    });
+
+    const reportData = {
+      generatedAt: new Date().toISOString(),
+      period: reportPeriod,
+      rangeStart: format(startDate, 'yyyy-MM-dd'),
+      rangeEnd: format(endDate, 'yyyy-MM-dd'),
+      summary: {
+        totalTasks,
+        completedTasks,
+        taskCompletion: totalTasks > 0 ? ((completedTasks / totalTasks) * 100).toFixed(1) : 0,
+        totalLogs,
+        totalReflections,
+        totalMoods: moodCount,
+        averageMood: moodCount > 0 ? (moodSum / moodCount).toFixed(2) : 0
+      },
+      moodDistribution: moodCounts,
+      dailyData: entries
+    };
+
+    return reportData;
+  };
+
+  const exportReportAsJSON = () => {
+    const report = generateReport();
+    const jsonString = JSON.stringify(report, null, 2);
+    const blob = new Blob([jsonString], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `report-${format(currentDate, 'yyyy-MM-dd')}.json`;
+    link.click();
+    URL.revokeObjectURL(url);
+    toast.success('Отчет экспортирован');
   };
 
   // --- READING LOGIC ---
@@ -312,7 +410,8 @@ export default function StatsView() {
           {[
             { id: 'charts' as const, icon: BarChart3, label: 'Графики' },
             { id: 'reading' as const, icon: BookOpen, label: 'Чтение' },
-            { id: 'search' as const, icon: Search, label: 'Поиск' }
+            { id: 'search' as const, icon: Search, label: 'Поиск' },
+            { id: 'reports' as const, icon: FileText, label: 'Отчеты' }
           ].map(tab => {
             const isActive = appViewMode === tab.id;
             return (
@@ -399,6 +498,53 @@ export default function StatsView() {
                 </button>
              </div>
            </div>
+        )}
+
+        {appViewMode === 'reports' && (
+          <div className="space-y-3">
+            <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1">
+              {(['day', 'week', 'month', 'year'] as const).map(p => (
+                <button
+                  key={p}
+                  onClick={() => setReportPeriod(p)}
+                  className={`
+                    px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap border transition-colors
+                    ${reportPeriod === p 
+                      ? `bg-[${primaryColor}] text-white border-transparent` 
+                      : `bg-transparent border-black/10 ${textMuted} hover:border-[${primaryColor}]`
+                    }
+                  `}
+                >
+                  {p === 'day' ? 'День' : p === 'week' ? 'Неделя' : p === 'month' ? 'Месяц' : 'Год'}
+                </button>
+              ))}
+            </div>
+            <div className="space-y-1">
+              <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground block">Выбрать метрики:</span>
+              <div className="grid grid-cols-3 gap-2">
+                {(['tasks', 'mood', 'logs'] as const).map(metric => (
+                  <button
+                    key={metric}
+                    onClick={() => {
+                      const newSet = new Set(reportMetrics);
+                      if (newSet.has(metric)) newSet.delete(metric);
+                      else newSet.add(metric);
+                      setReportMetrics(newSet);
+                    }}
+                    className={`
+                      px-2 py-1.5 rounded text-xs font-bold transition-all border
+                      ${reportMetrics.has(metric)
+                        ? `bg-[${primaryColor}] text-white border-transparent` 
+                        : `bg-transparent border-black/10 ${textMuted} hover:border-[${primaryColor}]`
+                      }
+                    `}
+                  >
+                    {metric === 'tasks' ? '✓ Задачи' : metric === 'mood' ? '😊 Настроение' : '📝 Записи'}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
         )}
       </div>
 
@@ -566,6 +712,102 @@ export default function StatsView() {
                 </div>
               </div>
             ))}
+          </div>
+        )}
+
+        {/* REPORTS VIEW */}
+        {appViewMode === 'reports' && (
+          <div className="space-y-6 animate-in fade-in duration-300">
+            {/* Report Summary */}
+            {(() => {
+              const report = generateReport();
+              return (
+                <div className="space-y-4">
+                  <div className={`p-4 rounded-xl border border-black/5 ${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white'}`}>
+                    <h3 className="text-sm font-bold mb-3">Параметры отчета</h3>
+                    <div className="space-y-2 text-xs">
+                      <div className="flex justify-between">
+                        <span className={textMuted}>Период:</span>
+                        <span className={`${textMain} font-bold`}>{report.rangeStart} → {report.rangeEnd}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className={textMuted}>Дней в периоде:</span>
+                        <span className={`${textMain} font-bold`}>{report.dailyData.length}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className={textMuted}>Генерирован:</span>
+                        <span className={`${textMain} font-bold font-mono`}>{format(new Date(report.generatedAt), 'HH:mm:ss')}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Summary Stats */}
+                  <div className="grid grid-cols-2 gap-3">
+                    {reportMetrics.has('tasks') && (
+                      <div className={`p-3 rounded-xl border border-black/5 ${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white'}`}>
+                        <div className={`text-[10px] uppercase font-bold tracking-wider ${textMuted} mb-1 flex items-center gap-1`}>
+                          <CheckCircle2 size={10} /> Задачи
+                        </div>
+                        <div className="text-lg font-bold">{report.summary.completedTasks}/{report.summary.totalTasks}</div>
+                        <div className={`text-[10px] ${textMuted}`}>{report.summary.taskCompletion}% выполнено</div>
+                      </div>
+                    )}
+                    {reportMetrics.has('mood') && (
+                      <div className={`p-3 rounded-xl border border-black/5 ${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white'}`}>
+                        <div className={`text-[10px] uppercase font-bold tracking-wider ${textMuted} mb-1 flex items-center gap-1`}>
+                          <Smile size={10} /> Настроение
+                        </div>
+                        <div className="text-lg font-bold">{report.summary.averageMood}</div>
+                        <div className={`text-[10px] ${textMuted}`}>среднее значение</div>
+                      </div>
+                    )}
+                    {reportMetrics.has('logs') && (
+                      <div className={`p-3 rounded-xl border border-black/5 ${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white'}`}>
+                        <div className={`text-[10px] uppercase font-bold tracking-wider ${textMuted} mb-1 flex items-center gap-1`}>
+                          <FileText size={10} /> Записи
+                        </div>
+                        <div className="text-lg font-bold">{report.summary.totalLogs}</div>
+                        <div className={`text-[10px] ${textMuted}`}>{report.summary.totalReflections} заметок</div>
+                      </div>
+                    )}
+                    {reportMetrics.has('mood') && (
+                      <div className={`p-3 rounded-xl border border-black/5 ${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white'}`}>
+                        <div className={`text-[10px] uppercase font-bold tracking-wider ${textMuted} mb-1`}>📊 Записей</div>
+                        <div className="text-lg font-bold">{report.summary.totalMoods}</div>
+                        <div className={`text-[10px] ${textMuted}`}>определений настроения</div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Mood Distribution if selected */}
+                  {reportMetrics.has('mood') && (
+                    <div className={`p-4 rounded-xl border border-black/5 ${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white'}`}>
+                      <h4 className="text-xs font-bold uppercase mb-3 tracking-wider">Распределение настроений</h4>
+                      <div className="grid grid-cols-5 gap-2">
+                        {MOOD_CONFIG.map(mood => (
+                          <div key={mood.type} className="text-center">
+                            <div className="text-2xl mb-1">{mood.emoji}</div>
+                            <div className="text-xs font-bold">{report.moodDistribution[mood.type as keyof typeof report.moodDistribution]}</div>
+                            <div className={`text-[9px] ${textMuted}`}>{mood.label}</div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Export Button */}
+                  <button
+                    onClick={exportReportAsJSON}
+                    className={`w-full py-3 rounded-xl font-bold flex items-center justify-center gap-2 transition-all ${
+                      isDark ? 'bg-slate-800 hover:bg-slate-700 text-slate-100' : 'bg-black/5 hover:bg-black/10 text-[#4A403A]'
+                    }`}
+                  >
+                    <Download size={16} />
+                    Экспортировать отчет (JSON)
+                  </button>
+                </div>
+              );
+            })()}
           </div>
         )}
       </div>
