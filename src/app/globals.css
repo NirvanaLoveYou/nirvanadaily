@@ -1,0 +1,73 @@
+@import "tailwindcss";
+
+:root {
+  --background: 0 0% 98%; /* Soft Cream #FAF9F6 */
+  --foreground: 20 15% 20%; /* Warm Dark Grey */
+  --card: 0 0% 100%;
+  --card-foreground: 20 15% 20%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 20 15% 20%;
+  --primary: 25 60% 70%; /* #E8A87C Terracotta */
+  --primary-foreground: 0 0% 100%;
+  --secondary: 0 0% 96%;
+  --secondary-foreground: 20 15% 20%;
+  --muted: 0 0% 92%;
+  --muted-foreground: 0 0% 45%;
+  --accent: 25 60% 70%;
+  --accent-foreground: 0 0% 100%;
+  --destructive: 0 84% 60%;
+  --destructive-foreground: 0 0% 100%;
+  --border: 0 0% 88%;
+  --input: 0 0% 88%;
+  --ring: 25 60% 70%;
+  --radius: 0.5rem;
+}
+
+body {
+  background-color: #FAF9F6 !important;
+  color: #4A403A;
+  font-feature-settings: "rlig" 1, "calt" 1;
+  /* Smooth global theme transition for beautiful effect without reload */
+  transition: background-color 0.5s ease-in-out, color 0.5s ease-in-out, border-color 0.5s ease-in-out;
+}
+
+/* Minimal Scrollbar - Light Theme */
+::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 2px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Dark Mode Scrollbar */
+.dark ::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.2);
+}
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: rgba(148, 163, 184, 0.4);
+}
+
+/* Fix for Pie Chart black outline on click/focus */
+.recharts-pie-sector:focus,
+.recharts-sector:focus,
+.recharts-wrapper:focus,
+svg:focus {
+    outline: none !important;
+    box-shadow: none !important;
+}
