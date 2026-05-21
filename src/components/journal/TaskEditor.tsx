@@ -20,9 +20,12 @@ export function TaskEditor({ taskId, open, onClose }: { taskId: string | null; o
   const { data, updateTask, deleteTask, addTask, setCurrentDate, setViewMode, setTabMode, theme, taskCategories } = useJournal();
   
   // Find task and its associated date globally
-  const taskDateKey = taskId ? Object.keys(data).find(key => data[key].tasks.find(t => t.id === taskId)) : null;
+  const taskDateKey = taskId ? Object.keys(data).find(key => {
+    const entry = data[key];
+    return entry?.tasks?.find(t => t.id === taskId);
+  }) : null;
   const taskEntry = taskDateKey ? data[taskDateKey] : null;
-  const task = taskEntry?.tasks.find(t => t.id === taskId);
+  const task = taskEntry?.tasks?.find(t => t.id === taskId);
 
   // State for editable fields
   const [text, setText] = useState("");
@@ -49,7 +52,7 @@ export function TaskEditor({ taskId, open, onClose }: { taskId: string | null; o
   }, [task, open]);
 
   // Get all subtasks for this task
-  const subtasks = task ? (data[taskDateKey]?.tasks || []).filter(t => t.parentId === task.id) : [];
+  const subtasks = task && taskDateKey ? (data[taskDateKey]?.tasks || []).filter(t => t.parentId === task.id) : [];
 
   if (!task) return null;
 
