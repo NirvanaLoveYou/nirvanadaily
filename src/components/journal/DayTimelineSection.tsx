@@ -116,7 +116,7 @@ export default function DayTimelineSection() {
   };
 
   return (
-    <div className="space-y-4 pb-24 px-4 pt-2">
+    <div className="space-y-4 pb-4 px-4 pt-2">
       {/* Mood Section */}
       <div className={`rounded-xl p-3 border shadow-sm transition-colors ${getCardClass()}`}>
         <button 

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Folder, X, Plus, MoreHorizontal, Pencil, Trash2, FileStack } from "lucide-react"; // Added FileStack, Trash2
+import { Folder, X, Plus, MoreHorizontal, Pencil, Trash2, FileStack, ChevronDown, ChevronUp } from "lucide-react"; // Added FileStack, Trash2
 import { useJournal } from "@/lib/journal-context";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -158,7 +158,7 @@ export default function DayNotesSection() {
         className={cn("w-full flex items-center justify-between text-[10px] font-bold uppercase tracking-wider mb-3 hover:opacity-70 transition-colors", textMuted)}
       >
         <span>Заметки</span>
-        {entrySectionStates.reflections ? <Folder size={14} /> : <Folder size={14} className="rotate-180" />}
+        {entrySectionStates.reflections ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
       </button>
 
       {entrySectionStates.reflections && (

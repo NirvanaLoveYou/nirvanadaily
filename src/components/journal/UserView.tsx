@@ -5,7 +5,7 @@ import { useJournal, QUICK_ACTIONS_CONFIG } from "@/lib/journal-context";
 import { 
   Download, Upload, Trash2, ChevronRight, 
   BarChart3, Sparkles, User, Palette, RotateCcw, 
-  Settings2, Zap, Leaf, Check, Pencil, X 
+  Settings2, Zap, Leaf, Check, Pencil, X, Sun, Moon 
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -263,9 +263,9 @@ export default function UserView() {
                   'bg-white text-[#4A403A] border-black/5'}
               `}>
                 {theme === 'purple' ? <Palette size={16} className="text-purple-500" /> : 
-                 theme === 'dark' ? <div className="w-4 h-4 bg-slate-500 rounded-full" /> : 
+                 theme === 'dark' ? <Moon size={16} className="text-slate-300" /> : 
                  theme === 'nature' ? <Leaf size={16} className="text-[#3E4E3C]" /> : 
-                 <div className="w-4 h-4 bg-yellow-500 rounded-full" />}
+                 <Sun size={16} className="text-yellow-500" />}
               </div>
               <span className={`${getMainText()} text-sm font-bold`}>Тема оформления</span>
             </div>
@@ -280,8 +280,8 @@ export default function UserView() {
           {isThemeExpanded && (
             <div className="mt-4 grid grid-cols-2 gap-3 pt-4 border-t pointer-events-auto" onClick={(e) => e.stopPropagation()}>
               {[
-                { id: 'light' as const, label: 'Светлая', icon: <div className="w-4 h-4 bg-yellow-500 rounded-full" /> },
-                { id: 'dark' as const, label: 'Темная', icon: <div className="w-4 h-4 bg-slate-500 rounded-full" /> },
+                { id: 'light' as const, label: 'Светлая', icon: <Sun size={16} className="text-yellow-500" /> },
+                { id: 'dark' as const, label: 'Темная', icon: <Moon size={16} className="text-slate-300" /> },
                 { id: 'purple' as const, label: 'Лавандовая', icon: <Palette size={16} className="text-purple-500" /> },
                 { id: 'nature' as const, label: 'Природа', icon: <Leaf size={16} className="text-green-600" /> },
               ].map(t => {
